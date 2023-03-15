@@ -1,0 +1,28 @@
+<div class="flex flex-col">
+    <.form let={f} for={@creds_changeset} 
+        phx-change="validate_registration" 
+        phx-submit="register_creds"
+        action={Routes.session_path(@socket, :register)}
+        phx-trigger-action={@trigger_submit}
+        class="flex flex-col gap-2" >
+        <div class="flex flex-col">
+            <%= label f, :email, class: "font-bold" %>
+            <%= text_input f, :email, class: "bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500"  %>
+            <%= error_tag f, :email %>
+        </div>
+        <div class="flex flex-col">
+            <%= label f, :password, class: "font-bold" %>
+            <%= password_input f, :password, class: "bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500", value: input_value(f, :password)  %>
+            <%= error_tag f, :password %>
+        </div>
+        <div class="flex flex-col">
+            <%= label f, :password_confirmation, class: "font-bold" %>
+            <%= password_input f, :password_confirmation, class: "bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500" , value: input_value(f, :password_confirmation) %>
+            <%= error_tag f, :password_confirmation %>
+        </div>
+        <div class="flex justify-end gap-2">
+            <%=  submit "Register" , class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+            <button class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded" phx-click="toggle_create_list">Cancel</button>
+        </div>
+    </.form>
+</div>
