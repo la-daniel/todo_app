@@ -38,9 +38,7 @@ defmodule TodoApi.Todo do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
-
   def get_user_by_email(email) do
-
     query =
       from u in "users",
         where: ^email == u.email,
@@ -48,6 +46,7 @@ defmodule TodoApi.Todo do
 
     user = Repo.one(query)
   end
+
   @doc """
   Creates a user.
 
@@ -227,7 +226,6 @@ defmodule TodoApi.Todo do
         order_by: [asc: t.order],
         select: [:id, :detail, :title, :order]
     )
-
   end
 
   @doc """
@@ -407,7 +405,6 @@ defmodule TodoApi.Todo do
     Permission.changeset(permission, attrs)
   end
 
-
   def set_last_nil_order_to_curr_id(id) do
     query =
       from t in "todos",
@@ -425,6 +422,7 @@ defmodule TodoApi.Todo do
 
   def get_largest_task_order(list_id) do
     IO.inspect(list_id)
+
     if Repo.aggregate(Task, :count, :id) >= 1 do
       query =
         from t in Task,
@@ -434,6 +432,7 @@ defmodule TodoApi.Todo do
           limit: 1
 
       lastOrder = Repo.one(query)
+
       if lastOrder != nil do
         lastOrder = lastOrder + 1
       else
@@ -446,6 +445,7 @@ defmodule TodoApi.Todo do
 
   def get_largest_list_order(user_id) do
     IO.inspect(user_id)
+
     if Repo.aggregate(Task, :count, :id) >= 1 do
       query =
         from l in "lists",
@@ -466,15 +466,17 @@ defmodule TodoApi.Todo do
     end
   end
 
-  def change_todo_order(id, newListOrder) do
-    list_id = Repo.one!(
-      from t in Task,
-      where: t.id == ^id,
-      select: t.list_id,
-      limit: 1
-    )
+  def change_todo_order(id, newListOrder, new_list_id) do
+    list_id =
+      Repo.one!(
+        from t in Task,
+          where: t.id == ^id,
+          select: t.list_id,
+          limit: 1
+      )
 
-    IO.inspect(list_id)
+    IO.inspect(new_list_id)
+
     currentListOrder =
       Repo.one!(
         from t in "tasks",
@@ -484,6 +486,7 @@ defmodule TodoApi.Todo do
       )
 
     IO.inspect(currentListOrder)
+
     maxListOrder =
       Repo.one!(
         from t in "tasks",
@@ -493,41 +496,87 @@ defmodule TodoApi.Todo do
           limit: 1
       )
 
+    IO.puts("Log start")
+    IO.inspect(newListOrder)
+    IO.inspect(currentListOrder)
+    IO.inspect(maxListOrder)
+    IO.inspect(list_id)
+    IO.inspect(new_list_id)
+    IO.inspect("Log end")
+
+    task =
+      Repo.get_by(Task, id: id)
+      |> change_task(%{list_id: new_list_id})
+      |> Repo.update()
+
     cond do
-      newListOrder > currentListOrder && maxListOrder >= newListOrder ->
+      list_id != new_list_id ->
+        IO.puts("CHANGE LIST TIME")
+
+        from(t in Task,
+          update: [set: [order: fragment("\"order\" + 1")]],
+          where:
+            t.order >= ^newListOrder and t.list_id == ^new_list_id
+        )
+        |> Repo.update_all([])
+
+         from(t in Task,
+          update: [set: [order: fragment("\"order\" - 1")]],
+          where:
+            t.order >= ^currentListOrder and t.list_id == ^list_id
+        )
+        |> Repo.update_all([])
+
+
+        task =
+          Repo.get_by(Task, id: id)
+          |> change_task(%{order: newListOrder})
+          |> Repo.update()
+
+        task
+
+      list_id == new_list_id && newListOrder > currentListOrder && maxListOrder >= newListOrder ->
         IO.puts("GOING UP!")
 
         from(t in Task,
           update: [set: [order: fragment("\"order\" - 1")]],
-          where: t.order <= ^newListOrder and t.order > ^currentListOrder and t.list_id == ^list_id
+          where:
+            t.order <= ^newListOrder and t.order > ^currentListOrder and t.list_id == ^list_id
         )
         |> Repo.update_all([])
 
-        Repo.get_by(Task, id: id)
-        |> change_task(%{order: newListOrder})
-        |> Repo.update()
+        task =
+          Repo.get_by(Task, id: id)
+          |> change_task(%{order: newListOrder})
+          |> Repo.update()
 
-      newListOrder < currentListOrder && newListOrder >= 1 ->
+        task
+
+      list_id == new_list_id && newListOrder < currentListOrder && newListOrder >= 1 ->
         IO.puts("GOING DOWN!")
 
         from(t in Task,
           update: [set: [order: fragment("\"order\" + 1")]],
-          where: t.order >= ^newListOrder and t.order < ^currentListOrder and t.list_id == ^list_id
+          where:
+            t.order >= ^newListOrder and t.order < ^currentListOrder and t.list_id == ^list_id
         )
         |> Repo.update_all([])
 
-        Repo.get_by(Task, id: id)
-        |> change_task(%{order: newListOrder})
-        |> Repo.update()
+        task =
+          Repo.get_by(Task, id: id)
+          |> change_task(%{order: newListOrder})
+          |> Repo.update()
+
+        task
 
       true ->
         IO.puts("Nothing")
-        :nil
+        nil
     end
 
-     # Repo.get_by(Task, id: id)
-     # |> change_task(%{order: newListOrder})
-     # |> Repo.update()
+    # Repo.get_by(Task, id: id)
+    # |> change_task(%{order: newListOrder})
+    # |> Repo.update()
   end
 
   alias TodoApi.Todo.Comment
@@ -627,25 +676,38 @@ defmodule TodoApi.Todo do
   end
 
   def get_all_todos() do
-    users = Repo.all(
-      from user in TodoApi.Todo.User,
-      left_join: lists in assoc(user, :lists),
-      left_join: tasks in assoc(lists, :tasks),
-      preload: [lists: [tasks: [:comments]]]
-    )
+    users =
+      Repo.all(
+        from user in TodoApi.Todo.User,
+          left_join: lists in assoc(user, :lists),
+          left_join: tasks in assoc(lists, :tasks),
+          preload: [lists: [tasks: [:comments]]]
+      )
+
     {users}
   end
 
   def get_all_lists() do
-    lists = Repo.all(
-      from list in TodoApi.Todo.List,
-      left_join: user in assoc(list, :user),
-      left_join: tasks in assoc(list, :tasks),
-      left_join: list_permissions in assoc(list, :list_permissions),
-      left_join: comments in assoc(tasks, :comments),
-      group_by: [list.id],
-      preload:  [:user, :list_permissions, tasks: ^from(t in Task, left_join: user in assoc(t, :user), order_by: t.order, preload: [:comments, :user])]
-    )
+    lists =
+      Repo.all(
+        from list in TodoApi.Todo.List,
+          left_join: user in assoc(list, :user),
+          left_join: tasks in assoc(list, :tasks),
+          left_join: list_permissions in assoc(list, :list_permissions),
+          left_join: comments in assoc(tasks, :comments),
+          group_by: [list.id],
+          preload: [
+            :user,
+            :list_permissions,
+            tasks:
+              ^from(t in Task,
+                left_join: user in assoc(t, :user),
+                order_by: t.order,
+                preload: [:comments, :user]
+              )
+          ]
+      )
+
     {lists}
   end
 
@@ -698,6 +760,7 @@ defmodule TodoApi.Todo do
   """
   def create_list_permission(attrs \\ %{}) do
     IO.inspect(attrs)
+
     %ListPermission{}
     |> ListPermission.changeset(attrs)
     |> Repo.insert()
@@ -845,6 +908,4 @@ defmodule TodoApi.Todo do
   def change_task_permission(%TaskPermission{} = task_permission, attrs \\ %{}) do
     TaskPermission.changeset(task_permission, attrs)
   end
-
-
 end

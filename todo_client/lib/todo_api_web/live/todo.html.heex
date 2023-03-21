@@ -25,7 +25,7 @@
       <div class="flex gap-4 overflow-scroll">
           <%= if @lists != nil do %>
             <%= for list <- @lists do %>
-            <div class="dropzone flex flex-col block gap-1 p-6 bg-white shrink-0 w-1/3 border border-gray-200 rounded-lg shadow dark:bg-gray-400 dark:border-gray-700 dark:hover:bg-gray-700 items-center">
+            <div id={"list_#{list["id"]}"}  class="dropzone flex flex-col block gap-1 p-6 bg-white shrink-0 w-1/3 border border-gray-200 rounded-lg shadow dark:bg-gray-400 dark:border-gray-700 dark:hover:bg-gray-700 items-center">
               <div class="flex justify-between w-full gap-2 content-center">
                 <%= if @showEditListTitle and @selectedEditListId == list["id"] do %>
                   <div>
@@ -145,7 +145,7 @@
                     </div>
                 </div>
               <% end %>
-                <div draggable="true" class="block gap-1 p-6 bg-white text-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 flex items-center w-full">
+                <div id={"task_#{todo["id"]}"} order={"#{todo["order"]}"} class=" draggable block gap-1 p-6 bg-white text-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 flex items-center w-full">
                   <div class="flex-column justify-between mr-3">
                     <%= if list["user"]["id"] == @current_user_id do %> 
                     <button class="flex  hover:bg-blue-700  font-bold py-2 px-4 rounded" phx-click="move" phx-value-todo-id={todo["id"]}

@@ -3,7 +3,7 @@ defmodule TodoApiWeb.TodoCont do
   require Logger
   # alias Tesla.Multipart
   # plug Tesla.Middleware.Logger
-  alias TodoApi.Todo.List
+  # alias TodoApi.Todo.List
   alias TodoApi.Todo.Task
   # plug Tesla.Middleware.BaseUrl, "http://172.21.0.3:4001"
   # plug Tesla.Middleware.Headers, [{"authorization", "SFMyNTY.YjllMWE0M2ItMzE1MS00Y2VhLTgwOGYtMzUzZDUyN2I1NWE2.vDCFnMcxnQR4UXE0RjAWZpmzl6LA8NjcyJOgct-sqLY"}]
@@ -46,9 +46,8 @@ defmodule TodoApiWeb.TodoCont do
     Tesla.patch(client, "/tasks/" <> task["id"], %{"task" => task})
   end
 
-  def change_task_order(client, id, newListOrder) do
-    IO.inspect(newListOrder)
-    Tesla.post(client, "/change_order", %{"id" => id, "newListOrder" => newListOrder})
+  def change_task_order(client, id, newListOrder, new_list_id) do
+    Tesla.post(client, "/change_order", %{"id" => id, "newListOrder" => newListOrder, "new_list_id" => new_list_id})
   end
 
   def create_task(client, task_params) do

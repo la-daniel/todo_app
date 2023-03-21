@@ -5,7 +5,7 @@ defmodule Tesla.Middleware.UnauthorizedChecker do
     |> checkFor401(socket)
   end
 
-  def checkFor401( env, socket) do  
+  def checkFor401( env, _socket) do  
     {:ok, response} = env
     if response.status == 401 do
       IO.inspect("TIME TO RELOGIN")

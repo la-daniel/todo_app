@@ -21,7 +21,7 @@ defmodule TodoApiWeb.TodoController do
       # IO.inspect(todo)
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.todo_path(conn, :show, todo))
+      # |> put_resp_header("location", Routes.todo_path(conn, :show, todo))
       |> render("show.json", todo: todo)
     end
   end

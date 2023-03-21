@@ -7,7 +7,8 @@ defmodule TodoApiWeb.SessionController do
   Tesla.Builder.plug(Tesla.Middleware.JSON)
   Tesla.Builder.plug(Tesla.Middleware.FormUrlencoded)
 
-
+  defp secret, do: TodoApiWeb.Endpoint.config(:secret_key_base)
+ 
   def logout(conn, _params) do
     conn
     |> clear_session()
@@ -16,9 +17,14 @@ defmodule TodoApiWeb.SessionController do
 
   def login(conn, user) do
     # IO.inspect(conn)
-    # IO.inspect(user)
+    IO.inspect(user)
+    user_encrypt_password = update_in(user, ["user", "password"], fn pass -> Plug.Crypto.encrypt(secret(), "password", pass) end)
+    # user_test = Map.update!(user, "user", fn pass -> Plug.Crypto.encrypt(secret(), "password", pass) end)
+    # Plug.Crypto.encrypt(secret(), to_string(context), term)
+    IO.puts("USER TESTTTTTTTTTTTTTTTT")
+    IO.inspect(user_encrypt_password)
     # response = post("/session/", %{"user" => %{"email" => "test@example.com", "password" => "secret1234"}})
-    case post("/session/", user) do
+    case post("/session/", user_encrypt_password) do
      {:error, error} ->
         IO.inspect(error)
         redirect(conn, to: "/login")

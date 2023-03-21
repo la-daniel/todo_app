@@ -4,15 +4,28 @@ defmodule TodoApiWeb.API.SessionController do
   alias TodoApiWeb.APIAuthPlug
   alias Plug.Conn
   alias TodoApi.Todo
+  
+
+  defp secret, do: TodoApiWeb.Endpoint.config(:secret_key_base)
 
   @spec create(Conn.t(), map()) :: Conn.t()
   def create(conn, %{"user" => user_params}) do
+    
+    user_decrypt_password = update_in(user_params, ["password"], 
+    fn pass ->
+        with  {:ok, decrypted_pass} <- Plug.Crypto.decrypt(secret(), "password", pass)  do
+          IO.inspect(decrypted_pass)
+          decrypted_pass
+        end
+     end)
+    IO.inspect(user_decrypt_password)
+    IO.puts("DECRYPT PASSWORDDDDDDDDDD")
     conn
-    |> Pow.Plug.authenticate_user(user_params)
+    |> Pow.Plug.authenticate_user(user_decrypt_password)
     |> case do
       {:ok, conn} ->
-        IO.inspect(user_params)
-        user = Todo.get_user_by_email(user_params["email"])
+        IO.inspect(user_decrypt_password)
+        user = Todo.get_user_by_email(user_decrypt_password["email"])
 
         json(conn, %{
           data: %{

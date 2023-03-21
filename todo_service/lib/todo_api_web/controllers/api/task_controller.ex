@@ -46,11 +46,11 @@ defmodule TodoApiWeb.API.TaskController do
     end
   end
 
-  def change_order(conn, %{"id" => id, "newListOrder" => newListOrder}) do
+  def change_order(conn, %{"id" => id, "newListOrder" => newListOrder, "new_list_id" => new_list_id}) do
     todo = Todo.get_task!(id)
     IO.inspect(todo)
     IO.inspect(newListOrder)
-    with {:ok, %Task{} = task} <- Todo.change_todo_order(id, newListOrder) do
+    with {:ok, %Task{} = task} <- Todo.change_todo_order(id, newListOrder, new_list_id) do
       IO.inspect(task)
       render(conn, "show.json", task: task)
     else

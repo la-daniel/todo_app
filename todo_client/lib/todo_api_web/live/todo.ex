@@ -59,11 +59,23 @@ defmodule TodoApiWeb.Todo do
   def assign_todo_list(socket) do
     client = TodoCont.client(socket)
     {:ok, response} = TodoCont.get_all_lists(client)
-    # {:ok, response} = TodoCont.get_all_lists()
-    IO.inspect(response.body)
 
     socket
     |> assign(:lists, response.body["data"])
+
+    # IO.inspect(response)
+    # with %{"data" => []} = %{"data" => []} <- response.body do
+    #   socket
+    #   |> assign(:lists, response.body["data"])
+    # else
+    #   %{"error" => %{"code" => 401, "message" => "Not authenticated"}} ->
+    #     socket
+    #     # |> push_event("toast", %{message: "Session Expired: You need to relogin!!"})
+    #     # |> push_redirect(to: "/logout")
+    # end
+
+    # {:ok, response} = TodoCont.get_all_lists()
+    # IO.inspect(response.body)
   end
 
   def assign_todo(socket) do
@@ -292,8 +304,7 @@ defmodule TodoApiWeb.Todo do
     {:noreply,
      socket
      |> push_event("toast", %{message: "Successfully moved task."})
-     |> assign(:lists, response.body["data"])
-    }
+     |> assign(:lists, response.body["data"])}
   end
 
   def handle_event("save_list", %{"list" => list_params}, socket) do
@@ -559,16 +570,60 @@ defmodule TodoApiWeb.Todo do
         %{
           "draggedId" => dragged_id,
           "dropzoneId" => drop_zone_id,
-          "draggableIndex" => draggable_index
+          "newOrder" => new_order,
+          "new_list_id" => new_list_id
         },
         %{assigns: _assigns} = socket
       ) do
-    Logger.warn(dragged_id)
+    IO.inspect(dragged_id)
 
-    Logger.warn(drop_zone_id)
+    IO.inspect(drop_zone_id)
 
-    Logger.warn(draggable_index)
-    {:noreply, socket}
+    IO.inspect(new_order)
+    IO.puts("END DRAG LOGS")
+    client = TodoCont.client(socket)
+
+    {:ok, response} =
+      TodoCont.change_task_order(
+        client,
+        String.to_integer(dragged_id, 10),
+        new_order,
+        String.to_integer(new_list_id)
+      )
+
+    IO.inspect(response)
+
+    with %{"data" => moved_data} = %{"data" => %{}} <- response.body do
+      client = TodoCont.client(socket)
+      {:ok, response} = TodoCont.get_all_lists(client)
+      IO.inspect(moved_data)
+      created_list_name = moved_data["title"]
+
+      {:noreply,
+       socket
+       |> push_event("toast", %{message: "Moved task " <> created_list_name <> " successfully"})
+       |> assign(
+         lists: response.body["data"],
+         list_changeset: List.changeset(%List{}, %{})
+       )}
+    else
+      "" ->
+        {:ok, response} = TodoCont.get_all_lists(client)
+
+        {:noreply,
+         socket
+         |> push_event("toast", %{message: "Something went wrong woth changing task orders."})
+         |> assign(
+           lists: response.body["data"],
+           list_changeset: List.changeset(%List{}, %{})
+         )}
+
+      %{"error" => %{"code" => 401, "message" => "Not authenticated"}} ->
+        {:noreply,
+         socket
+         |> push_event("toast", %{message: "Session Expired: You need to relogin!"})
+         |> push_redirect(to: "/logout")}
+    end
   end
 
   def handle_event("toast_test", _params, socket) do
