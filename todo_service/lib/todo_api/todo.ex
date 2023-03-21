@@ -44,7 +44,7 @@ defmodule TodoApi.Todo do
         where: ^email == u.email,
         select: [u.email, u.id]
 
-    user = Repo.one(query)
+    Repo.one(query)
   end
 
   @doc """
@@ -434,7 +434,7 @@ defmodule TodoApi.Todo do
       lastOrder = Repo.one(query)
 
       if lastOrder != nil do
-        lastOrder = lastOrder + 1
+        lastOrder + 1
       else
         1
       end
@@ -457,7 +457,7 @@ defmodule TodoApi.Todo do
       lastOrder = Repo.one(query)
       # IO.puts(lastOrder)
       if lastOrder != nil do
-        lastOrder = lastOrder + 1
+        lastOrder + 1
       else
         1
       end
@@ -504,10 +504,9 @@ defmodule TodoApi.Todo do
     IO.inspect(new_list_id)
     IO.inspect("Log end")
 
-    task =
-      Repo.get_by(Task, id: id)
-      |> change_task(%{list_id: new_list_id})
-      |> Repo.update()
+    Repo.get_by(Task, id: id)
+    |> change_task(%{list_id: new_list_id})
+    |> Repo.update()
 
     cond do
       list_id != new_list_id ->

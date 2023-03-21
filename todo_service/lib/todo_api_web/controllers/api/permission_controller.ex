@@ -15,7 +15,7 @@ defmodule TodoApiWeb.PermissionController do
     with {:ok, %Permission{} = permission} <- Todo.create_permission(permission_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.permission_path(conn, :show, permission))
+      # |> put_resp_header("location", Routes.permission_path(conn, :show, permission))
       |> render("show.json", permission: permission)
     end
   end

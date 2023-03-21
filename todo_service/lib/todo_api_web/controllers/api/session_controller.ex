@@ -54,7 +54,8 @@ defmodule TodoApiWeb.API.SessionController do
         |> put_status(401)
         |> json(%{error: %{status: 401, message: "Invalid token"}})
 
-      {conn, user} ->
+      {conn, _user} ->
+
         json(conn, %{
           data: %{
             access_token: conn.private.api_access_token,

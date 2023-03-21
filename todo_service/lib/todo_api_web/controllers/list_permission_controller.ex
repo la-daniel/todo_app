@@ -15,7 +15,7 @@ defmodule TodoApiWeb.ListPermissionController do
     with {:ok, %ListPermission{} = list_permission} <- Todo.create_list_permission(list_permission_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.list_permission_path(conn, :show, list_permission))
+      # |> put_resp_header("location", Routes.list_permission_path(conn, :show, list_permission))
       |> render("show.json", list_permission: list_permission)
     end
   end
